@@ -16,7 +16,7 @@ Cell::Cell()
 {
 
 }
-Cell::Cell(int r, int c, Color clr)
+Cell::Cell(int r, int c, Color clr, string c_s)
 {
 	row = r; //row pos
 	col = c; //columns pos
@@ -25,6 +25,7 @@ Cell::Cell(int r, int c, Color clr)
 	g = 0;
 	h = 0;
 	f = 0;
+	color_str = c_s;
 
 	
 	
@@ -42,6 +43,24 @@ void Cell::display_cell()
 {
 	DrawRectangle(col * 20 + 1 , row * 20 + 202, size, size, color);
 }
+
+Color Cell::get_color()
+{
+	Color return_color = color;
+	return return_color;
+}
+
+void Cell::set_color_str(string c_s)
+{
+	color_str = c_s;
+}
+
+bool Cell::operator==(const Cell& other) const
+{
+	if (this->row == other.row && this->col == other.col) return true;
+	else return false;
+}
+
 
 Cell::~Cell()
 {

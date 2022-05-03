@@ -14,27 +14,31 @@ using std::vector; using std::string; using std::tuple;
 
 class Cell
 {
-private:
+
+
+public:
 	int row;
 	int col;
 	int size;
-	float g;
-	float h;
-	float f;
+	int g;
+	int h;
+	int f;
 	int counter;
-	Color color;
-	
-	
+	string color_str;
 
-public:
 	Cell();
-	Cell(int r, int c, Color clr);
+	Color color;
+
+	Cell(int r, int c, Color clr, string c_s);
 
 	
 	
 	void set_color(Color cr);
 	void display_cell();
+	Color get_color();
+	void set_color_str(string c_s);
 	
+	bool operator==(const Cell&) const;
 
 	~Cell();
 

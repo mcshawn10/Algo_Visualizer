@@ -58,6 +58,7 @@ public:
 	void clear_board();
 	void clear_search();
 	void find_path();
+	int m_dist(const Cell& c1, const Cell& c2);
 	void A_star();
 	void Dijkstra();
 	void BFS();

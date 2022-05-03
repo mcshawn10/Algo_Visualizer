@@ -18,7 +18,7 @@ Button::Button()
 	mouseOn = false;	
 }
 
-Button::Button(const char* t, int xp, int yp, int w, int h, void (Board::* f)())
+Button::Button(const char* t, int xp, int yp, int w, int h)
 {
 	title = t;
 	
@@ -26,12 +26,9 @@ Button::Button(const char* t, int xp, int yp, int w, int h, void (Board::* f)())
 	textbox.y = yp;
 	textbox.width = w;
 	textbox.height = h;
-	void (* func)() = &Board::f;
+	
 }
-/*void Button::function()
-{
-	func;
-}*/
+
 
 void Button::draw_box()
 {

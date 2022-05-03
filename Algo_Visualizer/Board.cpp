@@ -5,12 +5,18 @@
 #include <stdio.h>
 #include <tuple>
 #include <functional>
+#include <queue>
 #include <cmath>
+#include <random>
+#include <cstdlib>
+#include <limits>
 #include "raylib.h"
 #include "Board.h"
 #include "Cell.h"
+
 using std::cout; using std::cin; using std::endl;
-using std::vector; using std::string; using std::tuple;
+using std::vector; using std::string; using std::tuple; using std::make_tuple;
+using std::priority_queue;
 
 
 
@@ -24,13 +30,13 @@ Board::Board()
 	cell_size = 18;
 	found = false;
 
-	A_button = Button("A* Search", 20, 150, 300, 50, &Board::A_star);
-	D_button = Button("Dijkstra",400, 150, 250, 50, &Board::Dijkstra);
-	BFS_button = Button("BFS", 700,150, 250, 50, &Board::BFS);
-	start_button = Button("Start Cell",20, 50, 300, 50, &Board::set_start);
-	goal_button = Button("Goal Cell",350, 50, 300, 50, &Board::set_goal);
-	clr_board = Button("Clear Board", 800, 50, 350, 50, &Board::clear_board);
-	clr_search = Button("Clear Search", 800, 100, 350, 50, &Board::clear_search);
+	A_button = Button("A* Search", 20, 150, 300, 50);
+	D_button = Button("Dijkstra",400, 150, 250, 50);
+	BFS_button = Button("BFS", 700,150, 250, 50);
+	start_button = Button("Start Cell",20, 50, 300, 50);
+	goal_button = Button("Goal Cell",350, 50, 300, 50);
+	clr_board = Button("Clear Board", 800, 50, 350, 50);
+	clr_search = Button("Clear Search", 800, 100, 350, 50);
 	
 	
 
@@ -51,7 +57,7 @@ void Board::set_blocks()
 	{
 		for (int c = 0; c < cols; c++)
 		{
-			blocks[r][c] = Cell(r, c, WHITE);
+			blocks[r][c] = Cell(r, c, WHITE, "WHITE");
 		}
 	}
 }
@@ -109,19 +115,31 @@ tuple<int, int> Board::get_pos()
 {
 	int r = floor((GetMouseY()-200)/20);
 	int c = floor(GetMouseX()/20);
-	tuple<int, int> pos = std::make_tuple(r, c);
+	tuple<int, int> pos = make_tuple(r, c);
 		return pos;
 }
 
 void Board::set_start()
 {
+	
+	int r = rand() % 25;
+	int c = rand() % 60;
 
-	//something
+	start = blocks[r][c];
+	
+	blocks[r][c].set_color(GREEN);
+	blocks[r][c].display_cell();
 }
 
 void Board::set_goal()
 {
-	// something
+	int r = rand() % 25;
+	int c = rand() % 60;
+
+	goal = blocks[r][c];
+
+	blocks[r][c].set_color(RED);
+	blocks[r][c].display_cell();
 }
 
 void Board::draw_obstacles(int r, int c)
@@ -145,17 +163,88 @@ void Board::clear_board()
 
 void Board::clear_search()
 {
-	//something
+	for (int r = 0; r < rows; r++)
+	{
+		for (int c = 0; c < cols; c++)
+		{
+			Color temp_color = blocks[r][c].get_color();
+			if (temp_color == BLUE)
+			{
+				blocks[r][c].set_color(WHITE);
+				blocks[r][c].display_cell();
+			}
+			
+		}
+	}
 }
 
 void Board::find_path()
 {
-	//something
+	//pass
+}
+
+int Board::m_dist(const Cell& c1, const Cell& c2)
+{
+
+	return abs(c1.row - c2.row) + abs(c1.col - c2.col);
 }
 
 void Board::A_star()
 {
-	cout << "A*" << endl;
+	found = false;
+	vector<Cell> CLOSED;
+	start.g = 0;
+	start.h = std::numeric_limits<int>::max();
+	goal.h = 0;
+
+	priority_queue<tuple<int, int, Cell>> OPEN;
+	vector <Cell> O_ls;
+	tuple<int, int, Cell> init_tup = make_tuple(m_dist(start, goal), 0, start);	
+	OPEN.push(init_tup);
+
+	while (!OPEN.empty())
+	{
+		tuple<int, int, Cell> curr_tuple = OPEN.top();
+		Cell current_cell = std::get<2>(curr_tuple);
+
+		CLOSED.push_back(current_cell);
+		O_ls.push_back(current_cell);
+
+		if (current_cell == goal)
+		{
+			found = true;
+			break;
+		}
+
+		else
+		{
+			vector <Cell> children;
+			if (0 <= current_cell.row + 1 && current_cell.row + 1 <= 24)
+			{
+				children.push_back(blocks[current_cell.row + 1][current_cell.col]);
+			}
+			if (0 <= current_cell.row - 1 && current_cell.row + 1 <= 24)
+			{
+				children.push_back(blocks[current_cell.row - 1][current_cell.col]);
+			}
+			if (0 <= current_cell.col && current_cell.col- 1 <= 59)
+			{
+				children.push_back(blocks[current_cell.row][current_cell.col+1]);
+			}
+			if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
+			{
+				children.push_back(blocks[current_cell.row][current_cell.col-1]);
+			}
+
+			for (auto child : children)
+			{
+				if (child.color_str == "BLACK") continue;
+			}
+			
+		}
+
+	}
+
 }
 
 void Board::Dijkstra()
@@ -234,11 +323,23 @@ void Board::RUN()
 			else if (GetMouseY() < 200)
 			{
 
-				for (int i = 0; i < 7; i++)
-				{
-					if (CheckCollisionPointRec(GetMousePosition(), button_list[i].textbox)) (button_list[i].*func)();
+				
+				if (CheckCollisionPointRec(GetMousePosition(), button_list[0].textbox)) this->A_star();
+
+				else if(CheckCollisionPointRec(GetMousePosition(), button_list[1].textbox)) this->Dijkstra();
+
+				else if (CheckCollisionPointRec(GetMousePosition(), button_list[2].textbox)) this->BFS();
+
+				else if (CheckCollisionPointRec(GetMousePosition(), button_list[3].textbox)) this->set_start();
+
+				else if (CheckCollisionPointRec(GetMousePosition(), button_list[4].textbox)) this->set_goal();
+
+				else if (CheckCollisionPointRec(GetMousePosition(), button_list[5].textbox)) this->clear_board();
+
+				else if (CheckCollisionPointRec(GetMousePosition(), button_list[6].textbox)) this->clear_search();
 					
-				}
+					
+				
 
 			}
 		}

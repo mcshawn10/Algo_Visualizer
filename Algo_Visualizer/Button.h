@@ -19,10 +19,10 @@ class Button
 public:
 	
 	Button();
-	Button(const char* t, int xp, int yp, int w, int h, void (Board:: *f)());
+	Button(const char* t, int xp, int yp, int w, int h);
 	const char* title;
 	Rectangle textbox;
-	void (Board::* func)();
+	
 	bool mouseOn;
 	//void function();
 	void draw_box();
