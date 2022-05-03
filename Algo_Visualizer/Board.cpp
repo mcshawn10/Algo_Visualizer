@@ -145,6 +145,7 @@ void Board::set_goal()
 void Board::draw_obstacles(int r, int c)
 {
 	blocks[r][c].set_color(BLACK);
+	blocks[r][c].set_color_str("BLACK");
 	blocks[r][c].display_cell();
 
 }
@@ -239,6 +240,18 @@ void Board::A_star()
 			for (auto child : children)
 			{
 				if (child.color_str == "BLACK") continue;
+
+				child.g = m_dist(child, start);
+				child.h = m_dist(child, goal);
+				child.f = child.g + child.h;
+
+				int cost = current_cell.g + 1;
+
+
+				if (std::find(O_ls.begin(), O_ls.end(), child) != O_ls.end() && cost < child.g)
+				{
+
+				}
 			}
 			
 		}

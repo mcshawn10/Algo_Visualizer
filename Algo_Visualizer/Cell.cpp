@@ -55,6 +55,13 @@ void Cell::set_color_str(string c_s)
 	color_str = c_s;
 }
 
+
+
+string Cell::get_color_str()
+{
+	return color_str;
+}
+
 bool Cell::operator==(const Cell& other) const
 {
 	if (this->row == other.row && this->col == other.col) return true;

@@ -37,6 +37,7 @@ public:
 	void display_cell();
 	Color get_color();
 	void set_color_str(string c_s);
+	string get_color_str();
 	
 	bool operator==(const Cell&) const;
 
