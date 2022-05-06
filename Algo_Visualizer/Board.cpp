@@ -109,7 +109,7 @@ void Board::draw_board()
 	}*/
 	for (int i = 0; i < (25 * 60); i++)
 	{
-		blocks.at(i).display_cell();
+		blocks.at(i)->display_cell();
 	}
 
 
@@ -125,12 +125,13 @@ void Board::draw_board()
 	
 }
 
-tuple<int, int> Board::get_pos()
+int Board::get_pos()
 {
 	int r = floor((GetMouseY()-200)/20);
 	int c = floor(GetMouseX()/20);
-	tuple<int, int> pos = make_tuple(r, c);
-		return pos;
+	
+	//tuple<int, int> pos = make_tuple(r, c);
+	return (r*60)+c;
 }
 
 void Board::set_start()
@@ -140,7 +141,7 @@ void Board::set_start()
 	int c = rand() % 60;
 
 	int index = r * c;
-	start = &blocks.at(index);
+	start = blocks.at(index);
 	
 	start->set_color(GREEN);
 	start->set_color_str("GREEN");
@@ -152,32 +153,29 @@ void Board::set_goal()
 	int r = rand() % 25;
 	int c = rand() % 60;
 	int index = r * c;
-	goal = &blocks.at(index);
+	goal = blocks.at(index);
 
 	goal->set_color(RED);
 	goal->set_color_str("RED");
 	goal->display_cell();
 }
 
-void Board::draw_obstacles(int r, int c)
+void Board::draw_obstacles(int i)
 {
-	int index = r * c;
-	blocks.at(index).set_color(BLACK);
-	blocks.at(index).set_color_str("BLACK");
-	blocks.at(index).display_cell();
+	int index = i;
+	blocks.at(index)->set_color(BLACK);
+	blocks.at(index)->set_color_str("BLACK");
+	blocks.at(index)->display_cell();
 
 }
 
 void Board::clear_board()
 {
-	for (int r = 0; r < rows; r++)
+	for (auto i : blocks)
 	{
-		for (int c = 0; c < cols; c++)
-		{
-			int index = r * c;
-			blocks.at(index).set_color(WHITE);
-			blocks.at(index).display_cell();
-		}
+		i->set_color(WHITE);
+		i->set_color_str("WHITE");
+		i->display_cell();
 	}
 }
 
@@ -188,12 +186,12 @@ void Board::clear_search()
 		for (int c = 0; c < cols; c++)
 		{
 			int index = r * c;
-			string temp_color = blocks.at(index).get_color_str();
+			string temp_color = blocks.at(index)->get_color_str();
 			if (temp_color == "BLUE")
 			{
-				blocks.at(index).set_color(WHITE);
-				blocks.at(index).set_color_str("WHITE");
-				blocks.at(index).display_cell();
+				blocks.at(index)->set_color(WHITE);
+				blocks.at(index)->set_color_str("WHITE");
+				blocks.at(index)->display_cell();
 			}
 
 		}
@@ -241,7 +239,7 @@ void Board::A_star()
 	start->g = 0;
 	start->h = std::numeric_limits<int>::max();
 	goal->h = 0;
-	vector <Cell> children;
+	vector <Cell*> children;
 
 	priority_queue< tuple<int, int, Cell> > OPEN;
 	vector <Cell> O_ls;
@@ -295,40 +293,40 @@ void Board::A_star()
 
 			for (auto child : children)
 			{
-				if (child.color_str == "BLACK") continue;
+				if (child->color_str == "BLACK") continue;
 
-				child.g = m_dist(child, *start);
-				child.h = m_dist(child, *goal);
-				child.f = child.g + child.h;
+				child->g = m_dist(*child, *start);
+				child->h = m_dist(*child, *goal);
+				child->f = child->g + child->h;
 
 				int cost = current_cell.g + 1;
 				cl_itr = find(CLOSED.begin(), CLOSED.end(), child);
 				o_itr = find(O_ls.begin(), O_ls.end(), child);
 
 
-				if (o_itr != O_ls.end() && cost < child.g)
+				if (o_itr != O_ls.end() && cost < child->g)
 				{
 					cout << "first if statement" << endl;
 				}
 
 
-				else if (cl_itr != CLOSED.end() && child.g < cost) CLOSED.erase(cl_itr);
+				else if (cl_itr != CLOSED.end() && child->g < cost) CLOSED.erase(cl_itr);
 
 				else if (o_itr == O_ls.end() && cl_itr == CLOSED.end())
 				{
-					child.g = cost;
-					child.f = child.g + child.h;
-					O_ls.push_back(child);
-					tuple<int, int, Cell> tup = make_tuple(child.h, child.g, child);
+					child->g = cost;
+					child->f = child->g + child->h;
+					O_ls.push_back(*child);
+					tuple<int, int, Cell> tup = make_tuple(child->h, child->g, *child);
 					OPEN.push(tup);
 
-					parent[child.row][child.col] = current_cell;
+					parent[child->row][child->col] = current_cell;
 
-					if (child.color_str != "RED" && child.color_str != "GREEN")
+					if (child->color_str != "RED" && child->color_str != "GREEN")
 					{
-						child.set_color(BLUE);
-						child.set_color_str("BLUE");
-						child.display_cell();
+						child->set_color(BLUE);
+						child->set_color_str("BLUE");
+						child->display_cell();
 
 					}
 
@@ -356,9 +354,9 @@ void Board::Dijkstra()
 	{
 		for (int j = 0; j < 60; j++)
 		{
-			if (blocks.at(i*j) != *start)
+			if (blocks.at(i*j) != start)
 			{
-				blocks.at(i*j).set_h(1000);
+				blocks.at(i*j)->set_h(1000);
 			}
 		}
 	}
@@ -397,7 +395,7 @@ void Board::Dijkstra()
 			break;
 		}
 
-		vector<Cell> children;
+		vector<Cell*> children;
 		//Cell child_s;
 		int temp_r = current_cell.row;
 		int temp_c = current_cell.col;
@@ -428,41 +426,41 @@ void Board::Dijkstra()
 		}
 		
 
-		for (Cell child : children) // child is a pointer 
+		for (Cell* child : children) // child is a pointer 
 		{
 			cout << "working 2" << endl;
-			cout << child.row << " " << child.col << endl;
+			cout << child->row << " " << child->col << endl;
 
-			if (child.color_str == "BLACK") continue;
+			if (child->color_str == "BLACK") continue;
 
-			int alt = dist_curr + m_dist(current_cell, child);
-			cout << "alt, child.h: " << alt << ", " << child.h << endl;
+			int alt = dist_curr + m_dist(current_cell, *child);
+			cout << "alt, child.h: " << alt << ", " << child->h << endl;
 
-			if (alt < child.h && find(CLOSED.begin(), CLOSED.end(), child) == CLOSED.end())
+			if (alt < child->h && find(CLOSED.begin(), CLOSED.end(), child) == CLOSED.end())
 			{
 				cout << "working 3" << endl;
-				child.h = alt;
+				child->h = alt;
 				cout << "working 3.1" << endl;
 
-				tuple<int, Cell> tup = make_tuple(child.h, child);
+				tuple<int, Cell> tup = make_tuple(child->h, *child);
 				cout << "working 3.2" << endl;
 
 				OPEN.push(tup);
 				//parent[child->row][child->col] = current_cell; //calls assignment operator
 				cout << "working 3.3" << endl;
 
-				if (child == *goal)
+				if (*child == *goal)
 				{
 					found = true;
 					break;
 				}
-				if (child.color_str == "WHITE")
+				if (child->color_str == "WHITE")
 				{
 					cout << "working 4" << endl;
 					
-					child.set_color(BLUE);
-					child.set_color_str("BLUE");
-					child.display_cell();
+					child->set_color(BLUE);
+					child->set_color_str("BLUE");
+					child->display_cell();
 				}
 			}
 		}
@@ -477,7 +475,7 @@ void Board::Dijkstra()
 void Board::BFS()
 {
 	list <Cell> Q;
-	vector <Cell> children;
+	vector <Cell*> children;
 	Q.push_front(*start);
 
 	vector<Cell> visited;
@@ -525,25 +523,25 @@ void Board::BFS()
 			for (auto child : children)
 			{
 				cout << "working 2" << endl;
-				if (child.color_str == "BLACK" || find(visited.begin(), visited.end(), current_cell) != visited.end())
+				if (child->color_str == "BLACK" || find(visited.begin(), visited.end(), current_cell) != visited.end())
 				{
 					continue;
 				}
-				else if (child == *goal)
+				else if (*child == *goal)
 				{
-					parent[child.row][child.col] = current_cell;
+					parent[child->row][child->col] = current_cell;
 					Q.clear();
 				}
 
-				else if (child.color_str != "RED" && child.color_str != "GREEN")
+				else if (child->color_str != "RED" && child->color_str != "GREEN")
 				{
 
 					cout << "working 3" << endl;
-					parent[child.row][child.col] = current_cell;
-					Q.push_front(child);
-					child.set_color(BLUE);
-					child.set_color_str("BLUE");
-					child.display_cell();
+					parent[child->row][child->col] = current_cell;
+					Q.push_front(*child);
+					child->set_color(BLUE);
+					child->set_color_str("BLUE");
+					child->display_cell();
 				}
 			}
 			children.clear();
@@ -633,8 +631,8 @@ void Board::RUN()
 		else if (IsMouseButtonDown(0) && GetMouseY() > 200)
 		{
 			
-			tuple<int, int> coord = get_pos();
-			draw_obstacles(std::get<0>(coord), std::get<1>(coord));
+			int position = get_pos();
+			draw_obstacles(position);
 			
 		}
 

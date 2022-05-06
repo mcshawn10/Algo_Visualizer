@@ -44,7 +44,7 @@ public:
 	Cell* start;
 	Cell* goal;
 	//Cell** blocks;
-	vector<Cell> blocks;
+	vector<Cell*> blocks;
 	Cell** parent;
 
 	Board();
@@ -54,10 +54,10 @@ public:
 	
 	void initialize_lists();
 	void draw_board();
-	tuple<int,int> get_pos();
+	int get_pos();
 	void set_start();
 	void set_goal();
-	void draw_obstacles(int r, int c);
+	void draw_obstacles(int i);
 	void clear_board();
 	void clear_search();
 	void find_path();
