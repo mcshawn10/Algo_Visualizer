@@ -6,7 +6,9 @@
 #include <tuple>
 #include <functional>
 #include <queue>
+#include <stack>
 #include <cmath>
+#include <list>
 #include <random>
 #include <cstdlib>
 #include <limits>
@@ -16,7 +18,7 @@
 
 using std::cout; using std::cin; using std::endl;
 using std::vector; using std::string; using std::tuple; using std::make_tuple;
-using std::priority_queue;
+using std::priority_queue; using std::find; using std::stack; using std::list;
 
 
 
@@ -47,7 +49,7 @@ Board::Board()
 
 void Board::set_blocks()
 {
-	blocks = new Cell * [rows];
+	/*blocks = new Cell * [rows];
 	for (int i = 0; i < rows; i++)
 	{
 		blocks[i] = new Cell[cols];
@@ -58,6 +60,13 @@ void Board::set_blocks()
 		for (int c = 0; c < cols; c++)
 		{
 			blocks[r][c] = Cell(r, c, WHITE, "WHITE");
+		}
+	}*/
+	for (int r = 0; r < rows; r++)
+	{
+		for (int c = 0; c < cols; c++)
+		{
+			blocks.push_back(Cell(r, c, WHITE, "WHITE"));
 		}
 	}
 }
@@ -74,7 +83,7 @@ void Board::set_parent()
 	{
 		for (int c = 0; c < cols; c++)
 		{
-			parent[r][c] = Cell(r, c, WHITE);
+			parent[r][c] = Cell(r, c, WHITE, "WHITE");
 		}
 	}
 }
@@ -90,12 +99,17 @@ void Board::draw_board()
 {
 	ClearBackground(LIGHTGRAY); 
 
-	for (int r = 0; r < rows; r++) // draw cells
+	/*for (int r = 0; r < rows; r++) // draw cells
 	{
 		for (int c = 0; c < cols; c++)
 		{
-			blocks[r][c].display_cell();
+			int index = r * c;
+			blocks.at(index).display_cell();
 		}
+	}*/
+	for (int i = 0; i < (25 * 60); i++)
+	{
+		blocks.at(i).display_cell();
 	}
 
 
@@ -125,28 +139,32 @@ void Board::set_start()
 	int r = rand() % 25;
 	int c = rand() % 60;
 
-	start = blocks[r][c];
+	int index = r * c;
+	start = &blocks.at(index);
 	
-	blocks[r][c].set_color(GREEN);
-	blocks[r][c].display_cell();
+	start->set_color(GREEN);
+	start->set_color_str("GREEN");
+	start->display_cell();
 }
 
 void Board::set_goal()
 {
 	int r = rand() % 25;
 	int c = rand() % 60;
+	int index = r * c;
+	goal = &blocks.at(index);
 
-	goal = blocks[r][c];
-
-	blocks[r][c].set_color(RED);
-	blocks[r][c].display_cell();
+	goal->set_color(RED);
+	goal->set_color_str("RED");
+	goal->display_cell();
 }
 
 void Board::draw_obstacles(int r, int c)
 {
-	blocks[r][c].set_color(BLACK);
-	blocks[r][c].set_color_str("BLACK");
-	blocks[r][c].display_cell();
+	int index = r * c;
+	blocks.at(index).set_color(BLACK);
+	blocks.at(index).set_color_str("BLACK");
+	blocks.at(index).display_cell();
 
 }
 
@@ -156,8 +174,9 @@ void Board::clear_board()
 	{
 		for (int c = 0; c < cols; c++)
 		{
-			blocks[r][c].set_color(WHITE);
-			blocks[r][c].display_cell();
+			int index = r * c;
+			blocks.at(index).set_color(WHITE);
+			blocks.at(index).display_cell();
 		}
 	}
 }
@@ -168,20 +187,45 @@ void Board::clear_search()
 	{
 		for (int c = 0; c < cols; c++)
 		{
-			Color temp_color = blocks[r][c].get_color();
-			if (temp_color == BLUE)
+			int index = r * c;
+			string temp_color = blocks.at(index).get_color_str();
+			if (temp_color == "BLUE")
 			{
-				blocks[r][c].set_color(WHITE);
-				blocks[r][c].display_cell();
+				blocks.at(index).set_color(WHITE);
+				blocks.at(index).set_color_str("WHITE");
+				blocks.at(index).display_cell();
 			}
-			
+
 		}
 	}
 }
 
 void Board::find_path()
 {
-	//pass
+	Cell* p = goal;
+	if (found)
+	{
+		while (p != start)
+		{
+			path.push_back(*p);
+
+			p = &parent[p->row][p->col];
+		}
+
+		for (Cell i : path)
+		{
+			if (i.get_color_str() != "RED" && i.get_color_str() != "GREEN")
+			{
+				i.set_color(YELLOW);
+				i.set_color_str("YELLOW");
+				i.display_cell();
+			}
+		}
+	}
+	else
+	{
+		cout << "path not found" << endl;
+	}
 }
 
 int Board::m_dist(const Cell& c1, const Cell& c2)
@@ -194,13 +238,16 @@ void Board::A_star()
 {
 	found = false;
 	vector<Cell> CLOSED;
-	start.g = 0;
-	start.h = std::numeric_limits<int>::max();
-	goal.h = 0;
+	start->g = 0;
+	start->h = std::numeric_limits<int>::max();
+	goal->h = 0;
+	vector <Cell> children;
 
-	priority_queue<tuple<int, int, Cell>> OPEN;
+	priority_queue< tuple<int, int, Cell> > OPEN;
 	vector <Cell> O_ls;
-	tuple<int, int, Cell> init_tup = make_tuple(m_dist(start, goal), 0, start);	
+	tuple<int, int, Cell> init_tup = make_tuple(m_dist(*start, *goal), 0, *start);
+	vector <Cell>::iterator cl_itr;
+	vector <Cell>::iterator o_itr;
 	OPEN.push(init_tup);
 
 	while (!OPEN.empty())
@@ -211,7 +258,8 @@ void Board::A_star()
 		CLOSED.push_back(current_cell);
 		O_ls.push_back(current_cell);
 
-		if (current_cell == goal)
+		
+		if (current_cell == *goal)
 		{
 			found = true;
 			break;
@@ -219,40 +267,77 @@ void Board::A_star()
 
 		else
 		{
-			vector <Cell> children;
-			if (0 <= current_cell.row + 1 && current_cell.row + 1 <= 24)
+			int temp_r = current_cell.row;
+			int temp_c = current_cell.col;
+			if (0 <= temp_r + 1 && temp_r + 1 <= 24) // HOW TO ACCESS THE ORIGINAL
 			{
-				children.push_back(blocks[current_cell.row + 1][current_cell.col]);
+				int index = (temp_r + 1) * temp_c;
+				children.push_back(blocks.at(index));
+
 			}
-			if (0 <= current_cell.row - 1 && current_cell.row + 1 <= 24)
+			if (0 <= current_cell.row - 1 && current_cell.row - 1 <= 24)
 			{
-				children.push_back(blocks[current_cell.row - 1][current_cell.col]);
+				int index = (temp_r - 1) * temp_c;
+				children.push_back(blocks.at(index));
+
 			}
-			if (0 <= current_cell.col && current_cell.col- 1 <= 59)
+
+			if (0 <= current_cell.col - 1 && current_cell.col - 1 <= 59)
 			{
-				children.push_back(blocks[current_cell.row][current_cell.col+1]);
+				int index = (temp_c - 1) * temp_r;
+				children.push_back(blocks.at(index));
 			}
 			if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
 			{
-				children.push_back(blocks[current_cell.row][current_cell.col-1]);
+				int index = (temp_c + 1) * temp_r;
+				children.push_back(blocks.at(index));
 			}
 
 			for (auto child : children)
 			{
 				if (child.color_str == "BLACK") continue;
 
-				child.g = m_dist(child, start);
-				child.h = m_dist(child, goal);
+				child.g = m_dist(child, *start);
+				child.h = m_dist(child, *goal);
 				child.f = child.g + child.h;
 
 				int cost = current_cell.g + 1;
+				cl_itr = find(CLOSED.begin(), CLOSED.end(), child);
+				o_itr = find(O_ls.begin(), O_ls.end(), child);
 
 
-				if (std::find(O_ls.begin(), O_ls.end(), child) != O_ls.end() && cost < child.g)
+				if (o_itr != O_ls.end() && cost < child.g)
 				{
+					cout << "first if statement" << endl;
+				}
+
+
+				else if (cl_itr != CLOSED.end() && child.g < cost) CLOSED.erase(cl_itr);
+
+				else if (o_itr == O_ls.end() && cl_itr == CLOSED.end())
+				{
+					child.g = cost;
+					child.f = child.g + child.h;
+					O_ls.push_back(child);
+					tuple<int, int, Cell> tup = make_tuple(child.h, child.g, child);
+					OPEN.push(tup);
+
+					parent[child.row][child.col] = current_cell;
+
+					if (child.color_str != "RED" && child.color_str != "GREEN")
+					{
+						child.set_color(BLUE);
+						child.set_color_str("BLUE");
+						child.display_cell();
+
+					}
+
 
 				}
+
+
 			}
+			children.clear();
 			
 		}
 
@@ -262,12 +347,211 @@ void Board::A_star()
 
 void Board::Dijkstra()
 {
-	cout << "Dijkstra" << endl;
+	priority_queue< tuple<int, Cell> > OPEN;
+	vector <Cell> CLOSED;
+
+	start->h = 0;
+
+	for (int i = 0; i < 25; i++)
+	{
+		for (int j = 0; j < 60; j++)
+		{
+			if (blocks.at(i*j) != *start)
+			{
+				blocks.at(i*j).set_h(1000);
+			}
+		}
+	}
+	
+	tuple<int, Cell> init_tup = make_tuple(start->h, *start); // I think im making a copy of start right here
+	cout << "   " << endl;
+	cout << "initial push: " << start->h << ", " << start->color_str << endl;
+
+	
+	OPEN.push(init_tup);	
+
+
+	while (!OPEN.empty())
+	{
+		cout << "working 1" << endl;
+		
+		tuple<int, Cell> current_tup; 
+		int dist_curr;
+		Cell current_cell; // a new Cell in the stack, should this be a pointer?... I need to access the ACTUAL cell ie blocks[r][c]
+
+		
+		//std::tie(dist_curr, current_cell) = OPEN.top(); //extracting from the Q, am I getting a copy? - yes
+		current_tup = OPEN.top();
+		OPEN.pop();
+		dist_curr = std::get<0>(current_tup);
+		current_cell = std::get<1>(current_tup);
+
+		cout <<"current distance and cell: " << dist_curr << ", " << current_cell.color_str << endl;
+		cout << "current: " << current_cell.row << " " << current_cell.col << endl;
+
+		CLOSED.push_back(current_cell);
+
+		if (current_cell == (*goal))
+		{
+			found = true;
+			break;
+		}
+
+		vector<Cell> children;
+		//Cell child_s;
+		int temp_r = current_cell.row;
+		int temp_c = current_cell.col;
+
+
+		if (0 <= temp_r + 1 && temp_r + 1 <= 24) // HOW TO ACCESS THE ORIGINAL
+		{
+			int index = (temp_r + 1) * temp_c;
+			children.push_back(blocks.at(index)); 
+
+		}
+		if (0 <= current_cell.row - 1 && current_cell.row - 1 <= 24)
+		{
+			int index = (temp_r - 1) * temp_c;
+			children.push_back(blocks.at(index));
+			
+		}
+
+		if (0 <= current_cell.col - 1 && current_cell.col - 1 <= 59)
+		{
+			int index = (temp_c - 1) * temp_r;
+			children.push_back(blocks.at(index));
+		}
+		if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
+		{
+			int index = (temp_c + 1) * temp_r;
+			children.push_back(blocks.at(index));
+		}
+		
+
+		for (Cell child : children) // child is a pointer 
+		{
+			cout << "working 2" << endl;
+			cout << child.row << " " << child.col << endl;
+
+			if (child.color_str == "BLACK") continue;
+
+			int alt = dist_curr + m_dist(current_cell, child);
+			cout << "alt, child.h: " << alt << ", " << child.h << endl;
+
+			if (alt < child.h && find(CLOSED.begin(), CLOSED.end(), child) == CLOSED.end())
+			{
+				cout << "working 3" << endl;
+				child.h = alt;
+				cout << "working 3.1" << endl;
+
+				tuple<int, Cell> tup = make_tuple(child.h, child);
+				cout << "working 3.2" << endl;
+
+				OPEN.push(tup);
+				//parent[child->row][child->col] = current_cell; //calls assignment operator
+				cout << "working 3.3" << endl;
+
+				if (child == *goal)
+				{
+					found = true;
+					break;
+				}
+				if (child.color_str == "WHITE")
+				{
+					cout << "working 4" << endl;
+					
+					child.set_color(BLUE);
+					child.set_color_str("BLUE");
+					child.display_cell();
+				}
+			}
+		}
+		children.clear();
+
+
+
+	}
+	//find_path();
 }
 
 void Board::BFS()
 {
-	cout << "BFS" << endl;
+	list <Cell> Q;
+	vector <Cell> children;
+	Q.push_front(*start);
+
+	vector<Cell> visited;
+
+	while (!Q.empty())
+	{
+		Cell current_cell = Q.front(); //this is the problem
+		Q.pop_front();
+		cout << "working 1" << endl;
+		if (current_cell == *goal)
+		{
+			found = true;
+			break;
+		}
+
+		else if (find(visited.begin(), visited.end(), current_cell) == visited.end())
+		{
+			int temp_r = current_cell.row;
+			int temp_c = current_cell.col;
+			visited.push_back(current_cell);
+			if (0 <= temp_r + 1 && temp_r + 1 <= 24) // HOW TO ACCESS THE ORIGINAL
+			{
+				int index = (temp_r + 1) * temp_c;
+				children.push_back(blocks.at(index));
+
+			}
+			if (0 <= current_cell.row - 1 && current_cell.row - 1 <= 24)
+			{
+				int index = (temp_r - 1) * temp_c;
+				children.push_back(blocks.at(index));
+
+			}
+
+			if (0 <= current_cell.col - 1 && current_cell.col - 1 <= 59)
+			{
+				int index = (temp_c - 1) * temp_r;
+				children.push_back(blocks.at(index));
+			}
+			if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
+			{
+				int index = (temp_c + 1) * temp_r;
+				children.push_back(blocks.at(index));
+			}
+
+			for (auto child : children)
+			{
+				cout << "working 2" << endl;
+				if (child.color_str == "BLACK" || find(visited.begin(), visited.end(), current_cell) != visited.end())
+				{
+					continue;
+				}
+				else if (child == *goal)
+				{
+					parent[child.row][child.col] = current_cell;
+					Q.clear();
+				}
+
+				else if (child.color_str != "RED" && child.color_str != "GREEN")
+				{
+
+					cout << "working 3" << endl;
+					parent[child.row][child.col] = current_cell;
+					Q.push_front(child);
+					child.set_color(BLUE);
+					child.set_color_str("BLUE");
+					child.display_cell();
+				}
+			}
+			children.clear();
+
+		}
+		else continue;
+	}
+	find_path();
 }
 
 void Board::RUN()
@@ -326,35 +610,32 @@ void Board::RUN()
 
 		// game logic
 
-		if (IsMouseButtonDown(0))
+		
+		
+		if (IsMouseButtonPressed(0) && GetMouseY() < 200)
 		{
-			if (GetMouseY() > 200)
-			{
-				tuple<int, int> coord = get_pos();
-				draw_obstacles(std::get<0>(coord), std::get<1>(coord));
-			}
-			else if (GetMouseY() < 200)
-			{
+			if (CheckCollisionPointRec(GetMousePosition(), button_list[0].textbox)) this->A_star();
 
-				
-				if (CheckCollisionPointRec(GetMousePosition(), button_list[0].textbox)) this->A_star();
+			else if (CheckCollisionPointRec(GetMousePosition(), button_list[1].textbox)) this->Dijkstra();
 
-				else if(CheckCollisionPointRec(GetMousePosition(), button_list[1].textbox)) this->Dijkstra();
+			else if (CheckCollisionPointRec(GetMousePosition(), button_list[2].textbox)) this->BFS();
 
-				else if (CheckCollisionPointRec(GetMousePosition(), button_list[2].textbox)) this->BFS();
+			else if (CheckCollisionPointRec(GetMousePosition(), button_list[3].textbox)) this->set_start();
 
-				else if (CheckCollisionPointRec(GetMousePosition(), button_list[3].textbox)) this->set_start();
+			else if (CheckCollisionPointRec(GetMousePosition(), button_list[4].textbox)) this->set_goal();
 
-				else if (CheckCollisionPointRec(GetMousePosition(), button_list[4].textbox)) this->set_goal();
+			else if (CheckCollisionPointRec(GetMousePosition(), button_list[5].textbox)) this->clear_board();
 
-				else if (CheckCollisionPointRec(GetMousePosition(), button_list[5].textbox)) this->clear_board();
-
-				else if (CheckCollisionPointRec(GetMousePosition(), button_list[6].textbox)) this->clear_search();
-					
-					
-				
-
-			}
+			else if (CheckCollisionPointRec(GetMousePosition(), button_list[6].textbox)) this->clear_search();
+		}
+			
+		
+		else if (IsMouseButtonDown(0) && GetMouseY() > 200)
+		{
+			
+			tuple<int, int> coord = get_pos();
+			draw_obstacles(std::get<0>(coord), std::get<1>(coord));
+			
 		}
 
 
@@ -364,6 +645,6 @@ void Board::RUN()
 }
 Board::~Board()
 {
-	delete blocks;
+	//delete blocks;
 	delete parent;
 }

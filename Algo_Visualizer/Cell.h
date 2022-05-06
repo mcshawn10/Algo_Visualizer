@@ -25,11 +25,18 @@ public:
 	int f;
 	int counter;
 	string color_str;
-
-	Cell();
 	Color color;
 
-	Cell(int r, int c, Color clr, string c_s);
+
+	Cell();
+	Cell(int r, int c, Color clr, string c_s); // parameter constructor
+	Cell& operator=(const Cell& rhs); // copy assignment operator
+	Cell(const Cell& c1); // copy constructor
+	Cell(Cell&& src) noexcept; // move constructor
+	Cell& operator=(Cell&& src) noexcept; //move assignment operator
+	
+	
+
 
 	
 	
@@ -38,8 +45,12 @@ public:
 	Color get_color();
 	void set_color_str(string c_s);
 	string get_color_str();
+	void set_h(int i);
 	
 	bool operator==(const Cell&) const;
+	bool operator!=(const Cell&) const;
+	bool operator < (const Cell& other) const;
+	bool operator > (const Cell& other) const;
 
 	~Cell();
 

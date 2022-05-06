@@ -24,10 +24,7 @@ private:
 	int cols;
 	int fps;
 	int cell_size;
-	Cell** blocks;
-	Cell** parent;
-	Cell start;
-	Cell goal;
+	
 	bool found;
 	vector <Cell> path;
 	
@@ -44,6 +41,12 @@ private:
 
 
 public:
+	Cell* start;
+	Cell* goal;
+	//Cell** blocks;
+	vector<Cell> blocks;
+	Cell** parent;
+
 	Board();
 	void set_blocks();
 	void set_parent();
