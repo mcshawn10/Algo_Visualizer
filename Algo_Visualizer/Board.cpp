@@ -49,43 +49,43 @@ Board::Board()
 
 void Board::set_blocks()
 {
-	/*blocks = new Cell * [rows];
+	blocks = new Cell * [rows];// array layer one
+	block_ptrs = new Cell*[rows * cols]; 
+
 	for (int i = 0; i < rows; i++)
 	{
-		blocks[i] = new Cell[cols];
+		blocks[i] = new Cell[cols]; // array layer two
+	}
+	for (int r = 0; r < rows; r++)
+	{
+		for (int c = 0; c < cols; c++)
+		{
+			blocks[r][c] = Cell(r, c, WHITE, "WHITE"); // element access aka array layer 3
+		}
 	}
 
-	for (int r = 0; r < rows; r++)
+	for (int r = 0; r < rows; r++) // initialize pointer array
 	{
 		for (int c = 0; c < cols; c++)
 		{
-			blocks[r][c] = Cell(r, c, WHITE, "WHITE");
-		}
-	}*/
-	for (int r = 0; r < rows; r++)
-	{
-		for (int c = 0; c < cols; c++)
-		{
-			blocks.push_back(Cell(r, c, WHITE, "WHITE"));
+			block_ptrs[(r * 60) + c] = &blocks[r][c];
 		}
 	}
+
+
+
+	
 }
 
 void Board::set_parent()
 {
 	parent = new Cell * [rows];
-	for (int i = 0; i < rows; i++)
+	/*for (int i = 0; i < (rows * cols); i++)
 	{
-		parent[i] = new Cell[cols];
-	}
+		parent[i] = NULL;
+	}*/
 
-	for (int r = 0; r < rows; r++)
-	{
-		for (int c = 0; c < cols; c++)
-		{
-			parent[r][c] = Cell(r, c, WHITE, "WHITE");
-		}
-	}
+	
 }
 
 void Board::initialize_lists()
@@ -99,17 +99,10 @@ void Board::draw_board()
 {
 	ClearBackground(LIGHTGRAY); 
 
-	/*for (int r = 0; r < rows; r++) // draw cells
-	{
-		for (int c = 0; c < cols; c++)
-		{
-			int index = r * c;
-			blocks.at(index).display_cell();
-		}
-	}*/
+
 	for (int i = 0; i < (25 * 60); i++)
 	{
-		blocks.at(i)->display_cell();
+		block_ptrs[i]->display_cell();
 	}
 
 
@@ -130,7 +123,7 @@ int Board::get_pos()
 	int r = floor((GetMouseY()-200)/20);
 	int c = floor(GetMouseX()/20);
 	
-	//tuple<int, int> pos = make_tuple(r, c);
+	
 	return (r*60)+c;
 }
 
@@ -140,8 +133,8 @@ void Board::set_start()
 	int r = rand() % 25;
 	int c = rand() % 60;
 
-	int index = r * c;
-	start = blocks.at(index);
+	
+	start = &blocks[r][c];
 	
 	start->set_color(GREEN);
 	start->set_color_str("GREEN");
@@ -152,8 +145,8 @@ void Board::set_goal()
 {
 	int r = rand() % 25;
 	int c = rand() % 60;
-	int index = r * c;
-	goal = blocks.at(index);
+	
+	goal = &blocks[r][c];
 
 	goal->set_color(RED);
 	goal->set_color_str("RED");
@@ -162,61 +155,66 @@ void Board::set_goal()
 
 void Board::draw_obstacles(int i)
 {
-	int index = i;
-	blocks.at(index)->set_color(BLACK);
-	blocks.at(index)->set_color_str("BLACK");
-	blocks.at(index)->display_cell();
+	
+	block_ptrs[i]->set_color(BLACK);
+	block_ptrs[i]->set_color_str("BLACK");
+	block_ptrs[i]->display_cell();
 
 }
 
 void Board::clear_board()
 {
-	for (auto i : blocks)
+	for (int i=0;i<(rows*cols); i++)
 	{
-		i->set_color(WHITE);
-		i->set_color_str("WHITE");
-		i->display_cell();
+		block_ptrs[i]->set_color(WHITE);
+		block_ptrs[i]->set_color_str("WHITE");
+		block_ptrs[i]->display_cell();
 	}
+	// should also delete the pointers and path ? 
+	//delete[] parent;
 }
 
 void Board::clear_search()
 {
-	for (int r = 0; r < rows; r++)
+	for (int i = 0; i < (rows * cols); i++)
 	{
-		for (int c = 0; c < cols; c++)
-		{
-			int index = r * c;
-			string temp_color = blocks.at(index)->get_color_str();
-			if (temp_color == "BLUE")
-			{
-				blocks.at(index)->set_color(WHITE);
-				blocks.at(index)->set_color_str("WHITE");
-				blocks.at(index)->display_cell();
-			}
+		
+		
+		string temp_color = block_ptrs[i]->get_color_str();
 
+		if (temp_color == "SKYBLUE")
+		{
+			block_ptrs[i]->set_color(WHITE);
+			block_ptrs[i]->set_color_str("WHITE");
+			block_ptrs[i]->display_cell();
 		}
+
+		
 	}
+	//delete[] parent;
 }
 
 void Board::find_path()
 {
-	Cell* p = goal;
+	Cell* p = goal; // goal is a pointer to &blocks[r][c], I need p to be initialized to the same pointer? 
+	cout << "working 1" << endl;
 	if (found)
 	{
-		while (p != start)
+		while (*p != *start)
 		{
-			path.push_back(*p);
+			path.push_back(p);
 
-			p = &parent[p->row][p->col];
+			p = parent[(p->row * 60) + p->col];
 		}
 
-		for (Cell i : path)
+		for (Cell* i : path)
 		{
-			if (i.get_color_str() != "RED" && i.get_color_str() != "GREEN")
+			cout << "working 2" << endl;
+			if (i->get_color_str() != "RED" && i->get_color_str() != "GREEN")
 			{
-				i.set_color(YELLOW);
-				i.set_color_str("YELLOW");
-				i.display_cell();
+				i->set_color(YELLOW);
+				i->set_color_str("YELLOW");
+				i->display_cell();
 			}
 		}
 	}
@@ -270,25 +268,25 @@ void Board::A_star()
 			if (0 <= temp_r + 1 && temp_r + 1 <= 24) // HOW TO ACCESS THE ORIGINAL
 			{
 				int index = (temp_r + 1) * temp_c;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 
 			}
 			if (0 <= current_cell.row - 1 && current_cell.row - 1 <= 24)
 			{
 				int index = (temp_r - 1) * temp_c;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 
 			}
 
 			if (0 <= current_cell.col - 1 && current_cell.col - 1 <= 59)
 			{
 				int index = (temp_c - 1) * temp_r;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 			}
 			if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
 			{
 				int index = (temp_c + 1) * temp_r;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 			}
 
 			for (auto child : children)
@@ -300,8 +298,8 @@ void Board::A_star()
 				child->f = child->g + child->h;
 
 				int cost = current_cell.g + 1;
-				cl_itr = find(CLOSED.begin(), CLOSED.end(), child);
-				o_itr = find(O_ls.begin(), O_ls.end(), child);
+				cl_itr = find(CLOSED.begin(), CLOSED.end(), *child);
+				o_itr = find(O_ls.begin(), O_ls.end(), *child);
 
 
 				if (o_itr != O_ls.end() && cost < child->g)
@@ -324,8 +322,8 @@ void Board::A_star()
 
 					if (child->color_str != "RED" && child->color_str != "GREEN")
 					{
-						child->set_color(BLUE);
-						child->set_color_str("BLUE");
+						child->set_color(SKYBLUE);
+						child->set_color_str("SKYBLUE");
 						child->display_cell();
 
 					}
@@ -345,25 +343,26 @@ void Board::A_star()
 
 void Board::Dijkstra()
 {
+	found = false;
 	priority_queue< tuple<int, Cell> > OPEN;
 	vector <Cell> CLOSED;
 
 	start->h = 0;
 
-	for (int i = 0; i < 25; i++)
+	for (int i = 0; i < (rows*cols); i++)
 	{
-		for (int j = 0; j < 60; j++)
+		
+		if (block_ptrs[i] != start)
 		{
-			if (blocks.at(i*j) != start)
-			{
-				blocks.at(i*j)->set_h(1000);
-			}
+			block_ptrs[i]->set_h(1000);
 		}
+		
 	}
 	
-	tuple<int, Cell> init_tup = make_tuple(start->h, *start); // I think im making a copy of start right here
-	cout << "   " << endl;
-	cout << "initial push: " << start->h << ", " << start->color_str << endl;
+	
+	tuple<int, Cell> init_tup;
+	init_tup = std::tie(start->h, *start);
+	
 
 	
 	OPEN.push(init_tup);	
@@ -371,21 +370,20 @@ void Board::Dijkstra()
 
 	while (!OPEN.empty())
 	{
-		cout << "working 1" << endl;
+		
 		
 		tuple<int, Cell> current_tup; 
 		int dist_curr;
-		Cell current_cell; // a new Cell in the stack, should this be a pointer?... I need to access the ACTUAL cell ie blocks[r][c]
+		Cell current_cell; 
 
 		
-		//std::tie(dist_curr, current_cell) = OPEN.top(); //extracting from the Q, am I getting a copy? - yes
+		
 		current_tup = OPEN.top();
 		OPEN.pop();
 		dist_curr = std::get<0>(current_tup);
 		current_cell = std::get<1>(current_tup);
 
-		cout <<"current distance and cell: " << dist_curr << ", " << current_cell.color_str << endl;
-		cout << "current: " << current_cell.row << " " << current_cell.col << endl;
+		
 
 		CLOSED.push_back(current_cell);
 
@@ -396,58 +394,60 @@ void Board::Dijkstra()
 		}
 
 		vector<Cell*> children;
-		//Cell child_s;
+		
 		int temp_r = current_cell.row;
 		int temp_c = current_cell.col;
 
 
 		if (0 <= temp_r + 1 && temp_r + 1 <= 24) // HOW TO ACCESS THE ORIGINAL
 		{
-			int index = (temp_r + 1) * temp_c;
-			children.push_back(blocks.at(index)); 
+			int index = ((temp_r+1) * 60) + temp_c;
+			children.push_back(block_ptrs[index]);
 
 		}
 		if (0 <= current_cell.row - 1 && current_cell.row - 1 <= 24)
 		{
-			int index = (temp_r - 1) * temp_c;
-			children.push_back(blocks.at(index));
+			int index = ((temp_r-1) * 60) + temp_c;
+			children.push_back(block_ptrs[index]);
 			
 		}
 
 		if (0 <= current_cell.col - 1 && current_cell.col - 1 <= 59)
 		{
-			int index = (temp_c - 1) * temp_r;
-			children.push_back(blocks.at(index));
+			int index = (temp_r*cols) + temp_c - 1;
+			children.push_back(block_ptrs[index]);
 		}
 		if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
 		{
-			int index = (temp_c + 1) * temp_r;
-			children.push_back(blocks.at(index));
+			int index = (temp_r * cols) + temp_c + 1;
+			children.push_back(block_ptrs[index]);
 		}
 		
 
 		for (Cell* child : children) // child is a pointer 
 		{
-			cout << "working 2" << endl;
-			cout << child->row << " " << child->col << endl;
 
 			if (child->color_str == "BLACK") continue;
 
 			int alt = dist_curr + m_dist(current_cell, *child);
-			cout << "alt, child.h: " << alt << ", " << child->h << endl;
+			
 
-			if (alt < child->h && find(CLOSED.begin(), CLOSED.end(), child) == CLOSED.end())
+			if (alt < child->h && find(CLOSED.begin(), CLOSED.end(), *child) == CLOSED.end()) // NOT in closed --- && find(CLOSED.begin(), CLOSED.end(), *child) == CLOSED.end()
 			{
-				cout << "working 3" << endl;
+				
 				child->h = alt;
-				cout << "working 3.1" << endl;
+				
 
-				tuple<int, Cell> tup = make_tuple(child->h, *child);
-				cout << "working 3.2" << endl;
+				
+				tuple<int, Cell> tup;
+				tup = std::tie(child->h, *child);
+				
 
 				OPEN.push(tup);
-				//parent[child->row][child->col] = current_cell; //calls assignment operator
-				cout << "working 3.3" << endl;
+
+
+				parent[(child->row * 60) + child->col] = &current_cell; // calls assignment operator
+				
 
 				if (*child == *goal)
 				{
@@ -456,20 +456,20 @@ void Board::Dijkstra()
 				}
 				if (child->color_str == "WHITE")
 				{
-					cout << "working 4" << endl;
 					
-					child->set_color(BLUE);
-					child->set_color_str("BLUE");
+					child->set_color(SKYBLUE);
+					child->set_color_str("SKYBLUE");
 					child->display_cell();
 				}
 			}
+			// else continue;
 		}
 		children.clear();
 
 
 
 	}
-	//find_path();
+	find_path();
 }
 
 void Board::BFS()
@@ -499,25 +499,25 @@ void Board::BFS()
 			if (0 <= temp_r + 1 && temp_r + 1 <= 24) // HOW TO ACCESS THE ORIGINAL
 			{
 				int index = (temp_r + 1) * temp_c;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 
 			}
 			if (0 <= current_cell.row - 1 && current_cell.row - 1 <= 24)
 			{
 				int index = (temp_r - 1) * temp_c;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 
 			}
 
 			if (0 <= current_cell.col - 1 && current_cell.col - 1 <= 59)
 			{
 				int index = (temp_c - 1) * temp_r;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 			}
 			if (0 <= current_cell.col + 1 && current_cell.col + 1 <= 59)
 			{
 				int index = (temp_c + 1) * temp_r;
-				children.push_back(blocks.at(index));
+				children.push_back(block_ptrs[index]);
 			}
 
 			for (auto child : children)
@@ -539,8 +539,8 @@ void Board::BFS()
 					cout << "working 3" << endl;
 					parent[child->row][child->col] = current_cell;
 					Q.push_front(*child);
-					child->set_color(BLUE);
-					child->set_color_str("BLUE");
+					child->set_color(SKYBLUE);
+					child->set_color_str("SKYBLUE");
 					child->display_cell();
 				}
 			}
@@ -549,7 +549,7 @@ void Board::BFS()
 		}
 		else continue;
 	}
-	find_path();
+	//find_path();
 }
 
 void Board::RUN()
@@ -644,5 +644,5 @@ void Board::RUN()
 Board::~Board()
 {
 	//delete blocks;
-	delete parent;
+	//delete parent;
 }

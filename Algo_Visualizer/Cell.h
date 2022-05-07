@@ -30,6 +30,7 @@ public:
 
 	Cell();
 	Cell(int r, int c, Color clr, string c_s); // parameter constructor
+	Cell& operator()(int R, int C, Color COLOR, string cColor);
 	Cell& operator=(const Cell& rhs); // copy assignment operator
 	Cell(const Cell& c1); // copy constructor
 	Cell(Cell&& src) noexcept; // move constructor

@@ -34,6 +34,16 @@ Cell::Cell(int r, int c, Color clr, string c_s)
 	
 	
 }
+Cell& Cell::operator()(int R, int C, Color COLOR, string cColor)
+{
+	Cell CELLY;
+	CELLY.row = R;
+	CELLY.col = C;
+	CELLY.color = COLOR;
+	CELLY.color_str = cColor;
+	return CELLY;
+	// // O: insert return statement here
+}
 Cell& Cell::operator=(const Cell& rhs) // assignment operator
 {
 	this->row =  rhs.row;
@@ -148,15 +158,17 @@ bool Cell::operator!=(const Cell& other) const
 
 bool Cell::operator<(const Cell& other) const
 {
-	if (this->counter <= other.counter) return true;
-	else if (this->counter > other.counter) return false;
+	/*if (this->counter <= other.counter) return true;
+	else if (this->counter > other.counter) return false;*/
+	return this->counter < other.counter;
 	
 }
 bool Cell::operator>(const Cell& other) const
 {
-	if (this->counter > other.counter) return true;
+	/*if (this->counter > other.counter) return true;
 	else if (this->counter <= other.counter) return false;
-
+	*/
+	return this->counter > other.counter;
 }
 
 Cell::~Cell()

@@ -25,8 +25,7 @@ private:
 	int fps;
 	int cell_size;
 	
-	bool found;
-	vector <Cell> path;
+	
 	
 	Button A_button;
 	Button D_button;
@@ -43,10 +42,11 @@ private:
 public:
 	Cell* start;
 	Cell* goal;
-	//Cell** blocks;
-	vector<Cell*> blocks;
+	Cell** blocks; // cell objects
+	Cell** block_ptrs; // cell pointers
 	Cell** parent;
-
+	bool found;
+	vector <Cell*> path;
 	Board();
 	void set_blocks();
 	void set_parent();
