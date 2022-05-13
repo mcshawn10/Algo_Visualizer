@@ -45,6 +45,7 @@ public:
 	Cell** blocks; // cell objects
 	Cell** block_ptrs; // cell pointers
 	Cell** parent;
+	//vector <Cell*> parent;
 	bool found;
 	vector <Cell*> path;
 	Board();
@@ -69,4 +70,3 @@ public:
 	~Board();
 	
 };
-

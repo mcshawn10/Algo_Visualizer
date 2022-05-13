@@ -57,6 +57,7 @@ Cell& Cell::operator=(const Cell& rhs) // assignment operator
 
 	this->color_str = rhs.color_str;
 
+	cout << "calling copy assignment" << endl;
 
 	return *this;
 	// // O: insert return statement here
